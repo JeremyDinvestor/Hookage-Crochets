@@ -4,4 +4,4 @@ Disallow: /cart.html
 Disallow: /track.html
 Disallow: /wishlist.html
 
-Sitemap: https://www.hookage.store/sitemap.xml
+Sitemap: https://crochethookage.netlify.app/sitemap.xml
