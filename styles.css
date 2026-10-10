@@ -203,3 +203,230 @@ html.splash{overflow:hidden}
 /* whatsapp checkout preview */
 #wapre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font:14px/1.5 Figtree,sans-serif;max-height:240px;overflow:auto;margin:0 0 10px}
 .btn svg.i{width:17px;height:17px}
+
+/* ===== Mobile navigation (hamburger menu) ===== */
+.menu-btn,
+.sub-toggle,
+.m-only {
+  display: none
+}
+
+header {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px)
+}
+
+/* hamburger icon: three bars that morph into an X */
+.menu-btn .bars {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 16px
+}
+
+.menu-btn .bars i {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform .25s ease, opacity .2s ease, top .25s ease
+}
+
+.menu-btn .bars i:nth-child(1) {
+  top: 0
+}
+
+.menu-btn .bars i:nth-child(2) {
+  top: 7px
+}
+
+.menu-btn .bars i:nth-child(3) {
+  top: 14px
+}
+
+header.menu-open .menu-btn .bars i:nth-child(1) {
+  top: 7px;
+  transform: rotate(45deg)
+}
+
+header.menu-open .menu-btn .bars i:nth-child(2) {
+  opacity: 0
+}
+
+header.menu-open .menu-btn .bars i:nth-child(3) {
+  top: 7px;
+  transform: rotate(-45deg)
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .menu-btn .bars i {
+    transition: none
+  }
+}
+
+html.menu-lock {
+  overflow: hidden
+}
+
+@media (max-width:768px) {
+  .hd {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px
+  }
+
+  .logo {
+    margin-right: auto;
+    font-size: 22px
+  }
+
+  .logo svg {
+    width: 32px;
+    height: 32px
+  }
+
+  .ic {
+    gap: 2px
+  }
+
+  .ic a[aria-label="Track your order"] {
+    display: none
+  }
+
+  /* moved into the menu */
+  .menu-btn {
+    display: inline-flex
+  }
+
+  /* the menu panel */
+  header nav {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, .12);
+    max-height: calc(100vh - 64px);
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+    overscroll-behavior: contain
+  }
+
+  header.menu-open nav {
+    display: block
+  }
+
+  header nav>ul {
+    display: block;
+    margin: 0;
+    padding: 6px 20px 18px;
+    gap: 0
+  }
+
+  header nav>ul>li {
+    position: relative;
+    border-bottom: 1px solid var(--line)
+  }
+
+  header nav>ul>li:last-child {
+    border-bottom: 0
+  }
+
+  header nav>ul>li>a {
+    display: block;
+    padding: 15px 44px 15px 0;
+    border: 0;
+    font-size: 17px;
+    font-weight: 500
+  }
+
+  .m-only {
+    display: block
+  }
+
+  /* sub-menus open like an accordion */
+  .dd>a::after {
+    content: none
+  }
+
+  .sub-toggle {
+    display: flex;
+    position: absolute;
+    right: -8px;
+    top: 4px;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    color: var(--text);
+    cursor: pointer
+  }
+
+  .sub-toggle::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform .2s
+  }
+
+  .dd.open>.sub-toggle::before {
+    transform: rotate(-135deg) translate(-2px, -2px)
+  }
+
+  .dd ul {
+    position: static;
+    min-width: 0;
+    padding: 0 0 10px 14px;
+    border: 0;
+    background: transparent
+  }
+
+  .dd.open>ul {
+    display: block !important
+  }
+
+  .dd ul a {
+    padding: 11px 0;
+    font-size: 16px;
+    color: var(--muted)
+  }
+}
+
+@media (max-width:400px) {
+  .logo {
+    font-size: 20px
+  }
+
+  .ib {
+    min-width: 36px;
+    padding: 6px
+  }
+}
+
+/* Hero controls: show only the slide dots and the pause button */
+#hero .dots {
+  font-size: 0
+}
+
+#hero .dots .pz {
+  font-size: 10px
+}
+
+#hero .dots>:not(button) {
+  display: none !important
+}
+
+#hero .dots::before,
+#hero .dots::after {
+  content: none !important
+}
