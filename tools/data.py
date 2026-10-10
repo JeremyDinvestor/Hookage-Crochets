@@ -62,4 +62,4 @@ CATEGORIES={
 }
 FEATURED=["granny-top-cardigan-set","striped-bodycon-dress","tangerine-beach-set","cherry-granny-bag","candy-swirl-bucket-hat"]
 # Social links shown in the footer: (label, link, icon). Replace the links with your real accounts.
-SOCIAL=[("WhatsApp","https://wa.me/2340000000000","wa"),("TikTok","https://www.tiktok.com/@hookage","tiktok"),("Instagram","https://www.instagram.com/hookage","insta"),("Pinterest","https://www.pinterest.com/hookage","pin")]
+SOCIAL=[("WhatsApp","https://wa.me/2348104419375","wa"),("TikTok","https://www.tiktok.com/@hookage","tiktok"),("Instagram","https://www.instagram.com/hookage","insta"),("Pinterest","https://www.pinterest.com/hookage","pin")]
