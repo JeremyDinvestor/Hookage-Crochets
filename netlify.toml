@@ -1,5 +1,5 @@
 [build]
-  command = "python3 tools/build.py --url https://crochethookage.netlify.app"
+  command = "python3 tools/build.py --url https://crochethookage.netlify.app --output sitemap.xml"
   publish = "."
 
 [build.environment]
