@@ -6,10 +6,28 @@ import os,re,sys,json,html,datetime
 from PIL import Image
 HERE=os.path.dirname(os.path.abspath(__file__));ROOT=os.path.dirname(HERE);sys.path.insert(0,HERE)
 from data import *
+GOOGLE_VERIFY=""   # paste the content value from Google Search Console here (leave empty to skip)
+PROTECT=set()      # file names build.py must NEVER overwrite or delete, e.g. {"about.html","robots.txt"}
+KEEP_MARK="hk:keep"   # put <!-- hk:keep --> anywhere inside a page and build.py will leave that page alone
 SITE=(sys.argv[sys.argv.index("--url")+1] if "--url" in sys.argv else SITE_DEFAULT).rstrip("/")
 IMGDIR=os.path.join(ROOT,"assets","images");TODAY=datetime.date.today().isoformat()
 DIM={f[:-4]:list(Image.open(os.path.join(IMGDIR,f)).size) for f in os.listdir(IMGDIR) if f.endswith(".jpg")}
 esc=html.escape
+def locked(path):
+    name=os.path.basename(path)
+    if name in PROTECT or name.startswith("google"): return True
+    if name.endswith(".html") and os.path.exists(path):
+        try: return KEEP_MARK in open(path,encoding="utf8").read()
+        except Exception: return False
+    return False
+def write(path,text):
+    if os.path.exists(path) and locked(path):
+        print("kept (not overwritten):",os.path.basename(path));return False
+    open(path,"w",encoding="utf8").write(text);return True
+def inject(name):
+    p=os.path.join(HERE,"inject",name)
+    return open(p,encoding="utf8").read() if os.path.exists(p) else ""
+INJECT_HEAD=inject("head.html");INJECT_BODY=inject("body-end.html")   # extra tags that go on every page
 def ic(n): return f'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">{IC[n]}</svg>'
 def money(n): return "₦{:,}".format(n)
 def T(name): return open(os.path.join(HERE,"templates",name+".html"),encoding="utf8").read()
@@ -48,16 +66,18 @@ def header(active):
     lis=""
     for key,label,href,sub in NAV:
         cur=' aria-current="page"' if key==active else ""
-        if sub: lis+=f'<li class="dd"><a href="{href}"{cur}>{label}</a><ul>'+"".join(f'<li><a href="{h}">{t}</a></li>' for t,h in sub)+"</ul></li>"
+        if sub: lis+=f'<li class="dd"><a href="{href}"{cur}>{label}</a><button class="sub-toggle" type="button" aria-expanded="false" aria-label="Show {label} menu"></button><ul>'+"".join(f'<li><a href="{h}">{t}</a></li>' for t,h in sub)+"</ul></li>"
         else: lis+=f'<li><a href="{href}"{cur}>{label}</a></li>'
+    lis+='<li class="m-only"><a href="track.html">Track your order</a></li>'
     return f'''<a class="skip" href="#main">Skip to content</a>
 <div class="topbar"><div class="wrap"><span>{ic("truck")}Free shipping on orders over ₦50,000</span><span>{ic("spark")}Custom orders available</span><span>{ic("flower")}New season colours just dropped!</span></div></div>
 <header><div class="wrap hd"><a class="logo" href="index.html" aria-label="Hookagé home">{LOGO}{WM}</a>
-<nav aria-label="Main"><ul>{lis}</ul></nav>
+<nav aria-label="Main" id="mainNav"><ul>{lis}</ul></nav>
 <div class="ic"><button class="ib" id="sb" type="button" aria-label="Search" aria-expanded="false">{ic("search")}</button><button class="ib" id="tg" type="button" aria-label="Switch to dark mode" aria-pressed="false">☾</button>
 <a class="ib" href="wishlist.html" aria-label="Wishlist">{ic("heart")}<span class="bd" id="wc" hidden>0</span></a>
 <a class="ib" href="track.html" aria-label="Track your order">{ic("user")}</a>
-<a class="ib" href="cart.html" aria-label="Cart">{ic("bag")}<span class="bd" id="cc">0</span></a></div></div>
+<a class="ib" href="cart.html" aria-label="Cart">{ic("bag")}<span class="bd" id="cc">0</span></a>
+<button class="ib menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span></button></div></div>
 <div class="wrap sbar" id="sbar" hidden><form id="sf" role="search" action="shop.html" method="get"><input type="search" id="hq" name="q" placeholder="Search dresses, tops, bags" aria-label="Search the shop" style="margin:0"><button class="btn" type="submit">Search</button></form><ul class="sug" id="sug" hidden></ul></div></header>
 <div class="toast" id="ts" role="status"></div>'''
 def footer(link=lambda h:h):
@@ -76,6 +96,7 @@ if __name__!="__main__" or True:
 def head(title,desc,path,ld=None,noindex=False,og="assets/images/og-image.jpg",preload=None):
     url=SITE+("/" if path=="index.html" else "/"+path)
     robots='<meta name="robots" content="noindex, follow">' if noindex else '<meta name="robots" content="index, follow, max-image-preview:large">'
+    GV=f'<meta name="google-site-verification" content="{GOOGLE_VERIFY}">' if GOOGLE_VERIFY else ''
     ldh="".join(f'<script type="application/ld+json">{json.dumps(x,ensure_ascii=False)}</script>\n' for x in (ld or []))
     pre=f'<link rel="preload" as="image" href="{preload}" fetchpriority="high">\n' if preload else ""
     return f'''<!DOCTYPE html>
@@ -88,6 +109,8 @@ def head(title,desc,path,ld=None,noindex=False,og="assets/images/og-image.jpg",p
 {robots}
 <link rel="canonical" href="{url}">
 <meta name="theme-color" content="#1e3a32">
+{GV}
+{INJECT_HEAD}
 <meta property="og:type" content="website"><meta property="og:site_name" content="Hookagé"><meta property="og:locale" content="en_NG">
 <meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{url}">
 <meta property="og:image" content="{SITE}/{og}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Hookagé handmade crochet wear">
@@ -100,8 +123,8 @@ def head(title,desc,path,ld=None,noindex=False,og="assets/images/og-image.jpg",p
 <script>(function(){{var s=true;try{{var n=performance.getEntriesByType("navigation")[0],seen=sessionStorage.getItem("hk-intro");s=!seen||(n&&n.type==="reload");sessionStorage.setItem("hk-intro","1")}}catch(e){{}}if(s&&!matchMedia("(prefers-reduced-motion:reduce)").matches)document.documentElement.classList.add("splash")}})()</script>
 {ldh}</head>'''
 def page(file,key,title,desc,body,ld=None,noindex=False,pg=None,preload=None,attrs=""):
-    out=head(title,desc,file,ld,noindex,preload=preload)+f'\n<body data-page="{pg or key}">\n'+LOADER+'\n<div id="top"></div>\n'+header(key)+f'\n<main id="main">\n<section class="pg on" id="pg-{pg or key}"{attrs}>\n{body}\n</section>\n</main>\n'+footer()+'\n<script src="products.js" defer></script>\n<script src="config.js" defer></script>\n<script src="script.js" defer></script>\n</body>\n</html>\n'
-    open(os.path.join(ROOT,file),"w",encoding="utf8").write(fix(out));PAGES.append((file,noindex))
+    out=head(title,desc,file,ld,noindex,preload=preload)+f'\n<body data-page="{pg or key}">\n'+LOADER+'\n<div id="top"></div>\n'+header(key)+f'\n<main id="main">\n<section class="pg on" id="pg-{pg or key}"{attrs}>\n{body}\n</section>\n</main>\n'+footer()+'\n<script src="products.js" defer></script>\n<script src="config.js" defer></script>\n<script src="script.js" defer></script>\n'+INJECT_BODY+'\n</body>\n</html>\n'
+    write(os.path.join(ROOT,file),fix(out));PAGES.append((file,noindex))
 def h1ize(s,cls="pt"):
     s=s.replace("<h2",f'<h1 class="{cls}"',1);return s.replace("</h2>","</h1>",1)
 def crumbs(items):
@@ -167,15 +190,15 @@ for k,(f,title,desc,nav) in INFO.items():
 wl='<div class="wrap s"><h1 class="pt">Your wishlist</h1><p class="muted" id="wsub">Pieces you have saved. They stay here on this device.</p><div class="row" id="wact" style="margin-bottom:16px" hidden><button class="btn sm" id="wall" type="button">Add all to cart</button><button class="btn sm alt" id="wclr" type="button">Clear wishlist</button></div><div class="g5" id="wg"></div><div id="wempty" hidden><h2>Your wishlist is empty</h2><p class="muted">Tap the heart on any piece to save it for later.</p><a class="btn" href="shop.html">Browse the shop</a></div></div>'
 page("wishlist.html","shop","Your Wishlist | Hookagé","Your saved Hookagé pieces.",wl,noindex=True,pg="wishlist")
 # 404
-open(os.path.join(ROOT,"404.html"),"w",encoding="utf8").write(fix(head("Page not found | Hookagé","The page you are looking for could not be found.","404.html",noindex=True)+'\n<body data-page="404">\n'+LOADER+'\n<div id="top"></div>\n'+header("")+'\n<main id="main"><section class="pg on" id="pg-404"><div class="wrap s" style="text-align:center;padding:60px 0"><h1 class="pt">Page not found</h1><p class="muted">Sorry, we could not find that page.</p><a class="btn" href="index.html">Back to home</a> <a class="btn alt" href="shop.html">Shop the collection</a></div></section></main>\n'+footer()+'\n<script src="products.js" defer></script>\n<script src="config.js" defer></script>\n<script src="script.js" defer></script>\n</body>\n</html>\n'))
+write(os.path.join(ROOT,"404.html"),fix(head("Page not found | Hookagé","The page you are looking for could not be found.","404.html",noindex=True)+'\n<body data-page="404">\n'+LOADER+'\n<div id="top"></div>\n'+header("")+'\n<main id="main"><section class="pg on" id="pg-404"><div class="wrap s" style="text-align:center;padding:60px 0"><h1 class="pt">Page not found</h1><p class="muted">Sorry, we could not find that page.</p><a class="btn" href="index.html">Back to home</a> <a class="btn alt" href="shop.html">Shop the collection</a></div></section></main>\n'+footer()+'\n<script src="products.js" defer></script>\n<script src="config.js" defer></script>\n<script src="script.js" defer></script>\n'+INJECT_BODY+'\n</body>\n</html>\n'))
 # ---------- data for the browser, sitemap, robots, manifest
-open(os.path.join(ROOT,"products.js"),"w",encoding="utf8").write("/* Generated by tools/build.py: edit tools/data.py instead */\nwindow.HK_PRODUCTS="+json.dumps(P,ensure_ascii=False)+";\nwindow.HK_IMG="+json.dumps(DIM)+";\nwindow.HK_IC="+json.dumps(IC)+";\nwindow.HK_CATS="+json.dumps({c:{"file":v[0],"sizes":v[4],"def":v[5],"tile":v[3]} for c,v in CATEGORIES.items()})+";\nwindow.HK_FEATURED="+json.dumps([SLUG[s]["id"] for s in FEATURED])+";\n")
+write(os.path.join(ROOT,"products.js"),"/* Generated by tools/build.py: edit tools/data.py instead */\nwindow.HK_PRODUCTS="+json.dumps(P,ensure_ascii=False)+";\nwindow.HK_IMG="+json.dumps(DIM)+";\nwindow.HK_IC="+json.dumps(IC)+";\nwindow.HK_CATS="+json.dumps({c:{"file":v[0],"sizes":v[4],"def":v[5],"tile":v[3]} for c,v in CATEGORIES.items()})+";\nwindow.HK_FEATURED="+json.dumps([SLUG[s]["id"] for s in FEATURED])+";\n")
 pr={"index.html":"1.0","shop.html":"0.9","custom.html":"0.9"}
 urls="".join(f'<url><loc>{SITE}/{"" if f=="index.html" else f}</loc><lastmod>{TODAY}</lastmod><priority>{pr.get(f,"0.8" if f in [v[0] for v in CATEGORIES.values()] else "0.7")}</priority></url>\n' for f,n in PAGES if not n)
-open(os.path.join(ROOT,"sitemap.xml"),"w").write(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}</urlset>\n')
-open(os.path.join(ROOT,"robots.txt"),"w").write(f"User-agent: *\nAllow: /\nDisallow: /cart.html\nDisallow: /track.html\nDisallow: /wishlist.html\n\nSitemap: {SITE}/sitemap.xml\n")
-open(os.path.join(ROOT,"site.webmanifest"),"w").write(json.dumps({"name":"Hookagé","short_name":"Hookagé","description":"Handmade crochet wear and custom crochet","start_url":"/","display":"standalone","background_color":"#fbf7f0","theme_color":"#1e3a32","icons":[{"src":"assets/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"assets/icon-512.png","sizes":"512x512","type":"image/png"}]},indent=2))
+write(os.path.join(ROOT,"sitemap.xml"),f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}</urlset>\n')
+write(os.path.join(ROOT,"robots.txt"),f"User-agent: *\nAllow: /\nDisallow: /cart.html\nDisallow: /track.html\nDisallow: /wishlist.html\n\nSitemap: {SITE}/sitemap.xml\n")
+write(os.path.join(ROOT,"site.webmanifest"),json.dumps({"name":"Hookagé","short_name":"Hookagé","description":"Handmade crochet wear and custom crochet","start_url":"/","display":"standalone","background_color":"#fbf7f0","theme_color":"#1e3a32","icons":[{"src":"assets/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"assets/icon-512.png","sizes":"512x512","type":"image/png"}]},indent=2))
 keep={f for f,_ in PAGES}|{"404.html"}
 for f in os.listdir(ROOT):
-    if f.endswith(".html") and f not in keep: os.remove(os.path.join(ROOT,f)); print("removed old page",f)
+    if f.endswith(".html") and f not in keep and not locked(os.path.join(ROOT,f)): os.remove(os.path.join(ROOT,f)); print("removed old page",f)
 print(f"Built {len(PAGES)+1} pages for {SITE}")
