@@ -2,7 +2,7 @@
 
 Handmade crochet wear for women, men, kids, and the beach, plus custom crochet designs made to order. This repository contains the Hookagé storefront: a fast, static website built with plain HTML, CSS, and JavaScript.
 
-**Live site:** [https://yourdomain.com](https://yourdomain.com)
+**Live site:** https://crochethookage.netlify.app
 
 ---
 
@@ -24,7 +24,7 @@ Handmade crochet wear for women, men, kids, and the beach, plus custom crochet d
 
 - HTML5, CSS3, and vanilla JavaScript (no framework, no build step to run the site)
 - A small Python script (`tools/build.py`) that generates the static pages from the product data
-- Hosted on [Vercel](https://vercel.com)
+- Hosted on Netlify
 
 ## Project structure
 
@@ -89,7 +89,7 @@ To add or change a product:
 
 ```bash
 pip install pillow
-python3 tools/build.py --url https://yourdomain.com
+python3 tools/build.py --url https://crochethookage.netlify.app
 ```
 
 The script rebuilds every page, `products.js`, the sitemap, and the robots file.
@@ -101,8 +101,6 @@ The script rebuilds every page, `products.js`, the sitemap, and the robots file.
 - **Category tiles (`cat-*.jpg`):** landscape 3:2, about 900 x 600 px
 - Keep each file under about 150 KB so pages load quickly
 
-To replace a photo, save the new file over the old one with the same name, or point to a different file in the `PHOTOS` setting in `config.js`.
-
 ## SEO
 
 Every page has its own title, meta description, and canonical link. Product pages include `Product` structured data, category pages include `CollectionPage` data, and the FAQ page includes `FAQPage` data. After deploying:
@@ -110,33 +108,3 @@ Every page has its own title, meta description, and canonical link. Product page
 1. Set your real domain with the build command above.
 2. Submit `https://yourdomain.com/sitemap.xml` to Google Search Console.
 3. Add ratings to the structured data only once you have real customer reviews.
-
-## Deployment
-
-The site is plain static files, so it can be hosted anywhere. To deploy on Vercel:
-
-1. Push this repository to GitHub.
-2. In Vercel, choose **Add New → Project** and import the repository.
-3. Leave the framework preset as **Other** and select **Deploy**.
-4. Add your custom domain under **Settings → Domains**.
-
-Every push to the main branch redeploys the site automatically.
-
-## Browser support
-
-Current versions of Chrome, Edge, Firefox, and Safari, on desktop and mobile.
-
-## Roadmap
-
-- [ ] Online payments with Paystack
-- [ ] Order tracking connected to real orders
-- [ ] Newsletter signup connected to an email service
-- [ ] Customer reviews
-
-## License
-
-All rights reserved © [Year] Hookagé. Product photos and brand assets may not be reused without permission.
-
-## Contact
-
-Questions, orders, or custom requests: [hello@yourdomain.com](mailto:hello@yourdomain.com) or message us on WhatsApp.
